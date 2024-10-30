@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pterodactyl App</title>
+  <link rel="icon" href="icon.png">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #1e272e;
+      color: #f5f6fa;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    header {
+      background-color: #2f3640;
+      color: white;
+      width: 100%;
+      padding: 10px 0;
+      text-align: center;
+    }
+    #logo {
+      width: 250px;
+      height: auto;
+    }
+    main {
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+      align-items: flex-start;
+      width: 90%;
+      max-width: 1200px;
+      margin: 20px;
+    }
+    .form-container, .card-container {
+      background-color: #2f3640;
+      padding: 30px;
+      border-radius: 8px;
+      margin: 10px;
+    }
+    .form-container {
+      flex: 1;
+      max-width: 400px;
+    }
+    .card-container {
+      flex: 2;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      justify-content: center;
+    }
+    form {
+      display: flex;
+      flex-direction: column;
+    }
+    label {
+      margin-top: 15px;
+      font-weight: bold;
+      color: #f5f6fa;
+    }
+    input, textarea {
+      padding: 10px;
+      margin-top: 5px;
+      border: 1px solid #353b48;
+      border-radius: 4px;
+      font-size: 16px;
+      background-color: #353b48;
+      color: #f5f6fa;
+    }
+    button {
+      margin-top: 20px;
+      padding: 12px;
+      background-color: #3498db;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+      transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    }
+    button:hover {
+      background-color: #2980b9;
+    }
+    h2 {
+      margin-top: 40px;
+      color: #f5f6fa;
+    }
+    .card {
+      background-color: #353b48;
+      padding: 20px;
+      border-radius: 8px;
+      width: 100%;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    .card:hover {
+      transform: translateY(-5px);
+    }
+    .card h3 {
+      display: flex;
+      align-items: center;
+    }
+    .card p {
+      margin: 10px 0;
+    }
+    .card .actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .card .actions a {
+      flex: 1;
+      text-decoration: none;
+      color: #3498db;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 10px;
+      padding: 10px;
+      border-radius: 4px;
+      background-color: #2f3640;
+      transition: background-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
+      border: none;
+      cursor: pointer;
+    }
+    .card .actions button {
+      flex: 0 0 40px;
+      text-decoration: none;
+      color: #0078d7;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 10px;
+      margin-left: 4px;
+      padding: 12.5px 5px 12.5px 10px;
+      background-color: #2f3640;
+      transition: background-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
+      border: none;
+      cursor: pointer;
+    }
+    .card .actions a:hover, .card .actions button:hover {
+      background-color: #3498db;
+      color: white;
+    }
+    .card i {
+      margin-right: 5px;
+    }
+    @media (max-width: 768px) {
+      main {
+        flex-direction: column;
+        align-items: center;
+      }
+      .form-container, .card-container {
+        width: 100%;
+        max-width: none;
+      }
+    }
+    ::-webkit-scrollbar {
+      background-color:#1e272e;
+    }
+    ::-webkit-scrollbar-thumb {
+      background-color:#5c6572;
+      border-radius: 5044px;
+    }
+    ::-webkit-scrollbar-corner {
+      background-color:#1e272e;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <img id="logo" src="https://cdn.pterodactyl.io/logos/new/pterodactyl_logo_transparent.png" alt="Logo">
+  </header>
+  <main>
+    <div class="form-container">
+      <form id="dataForm">
+        <label for="serverName">Server name:</label>
+        <input type="text" id="serverName" name="serverName" required>
+        <label for="serverUrl">Server URL:</label>
+        <input type="text" id="serverUrl" name="serverUrl" required>
+        <label for="serverDescription">Server Description:</label>
+        <textarea id="serverDescription" name="serverDescription" rows="3" required></textarea>
+        <button type="submit">Save</button>
+      </form>
+      <p id="statusMessage"></p>
+    </div>
+    <div class="card-container" id="serverList"></div>
+  </main>
+  <script>
+    const { ipcRenderer } = require('electron');
+    const fs = require('fs');
+    let editMode = false;
+    let editServerName = '';
+
+    document.getElementById('dataForm').addEventListener('submit', (event) => {
+      event.preventDefault();
+      const serverName = document.getElementById('serverName').value;
+      const serverUrl = document.getElementById('serverUrl').value;
+      const serverDescription = document.getElementById('serverDescription').value;
+      if (editMode) {
+        ipcRenderer.send('update-data', { serverName, serverUrl, serverDescription, oldServerName: editServerName });
+      } else {
+        ipcRenderer.send('save-data', { serverName, serverUrl, serverDescription });
+      }
+      editMode = false;
+      editServerName = '';
+    });
+
+    ipcRenderer.on('save-data-reply', (event, message) => {
+      document.getElementById('statusMessage').innerText = message;
+      loadServers();
+    });
+
+    ipcRenderer.on('update-data-reply', (event, message) => {
+      document.getElementById('statusMessage').innerText = message;
+      loadServers();
+    });
+
+    function loadServers() {
+      fs.readFile('./data.json', 'utf8', (err, data) => {
+        if (err) {
+          return;
+        }
+        let servers = [];
+        try {
+          servers = JSON.parse(data);
+        } catch (parseErr) {
+          return;
+        }
+        const serverList = document.getElementById('serverList');
+        serverList.innerHTML = '';
+        servers.forEach(server => {
+          const card = document.createElement('div');
+          card.className = 'card';
+          const serverName = document.createElement('h3');
+          serverName.innerHTML = `<i class="fas fa-server"></i> ${server.serverName}`;
+          const serverDescription = document.createElement('p');
+          serverDescription.innerText = server.serverDescription;
+          const actions = document.createElement('div');
+          actions.className = 'actions';
+          const serverLink = document.createElement('a');
+          serverLink.href = '#';
+          serverLink.innerHTML = '<i class="fas fa-link"></i> Accéder au serveur';
+          serverLink.addEventListener('click', () => {
+            ipcRenderer.send('open-panel', server.serverUrl);
+          });
+          const editButton = document.createElement('button');
+          editButton.innerHTML = '<i class="fas fa-edit"></i>';
+          editButton.addEventListener('click', () => {
+            document.getElementById('serverName').value = server.serverName;
+            document.getElementById('serverUrl').value = server.serverUrl;
+            document.getElementById('serverDescription').value = server.serverDescription;
+            editMode = true;
+            editServerName = server.serverName;
+          });
+          const deleteButton = document.createElement('button');
+          deleteButton.innerHTML = '<i class="fas fa-trash"></i>';
+          deleteButton.addEventListener('click', () => {
+            deleteServer(server.serverName);
+          });
+          actions.appendChild(serverLink);
+          actions.appendChild(editButton);
+          actions.appendChild(deleteButton);
+          card.appendChild(serverName);
+          card.appendChild(serverDescription);
+          card.appendChild(actions);
+          serverList.appendChild(card);
+        });
+      });
+    }
+
+    function deleteServer(serverName) {
+      fs.readFile('./data.json', 'utf8', (err, data) => {
+        if (err) {
+          return;
+        }
+        let servers = JSON.parse(data);
+        servers = servers.filter(server => server.serverName !== serverName);
+        fs.writeFile('./data.json', JSON.stringify(servers, null, 2), (err) => {
+          if (err) {
+            return;
+          }
+          loadServers();
+        });
+      });
+    }
+
+    // Charger les serveurs au démarrage
+    loadServers();
+  </script>
+</body>
+</html>
