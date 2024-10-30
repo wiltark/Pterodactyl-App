@@ -1,0 +1,52 @@
+{
+  "name": "pterodactyl-app",
+  "version": "1.0.0",
+  "description": "Pterodactyl App - A modern and sleek application for managing Pterodactyl servers.",
+  "author": "wiltark",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder",
+    "dist:win": "electron-builder --win",
+    "dist:mac": "electron-builder --mac",
+    "dist:linux": "electron-builder --linux"
+  },
+  "build": {
+    "appId": "org.stiala.pterodactylapp",
+    "productName": "Pterodactyl App",
+    "files": [
+      "main.js",
+      "index.html",
+      "preload.js",
+      "data.json",
+      "icon.png",
+      "404.html"
+    ],
+    "directories": {
+      "buildResources": "build"
+    },
+    "asarUnpack": "**/*",
+    "win": {
+      "target": "nsis",
+      "icon": "build/icon.ico"
+    },
+    "linux": {
+      "target": "AppImage",
+      "icon": "build/icon.png"
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "build/icon.icns"
+    }
+  },
+  "devDependencies": {
+    "electron": "^25.1.8",
+    "electron-builder": "^22.14.13"
+  },
+  "dependencies": {
+    "ejs": "^3.1.10",
+    "electron-log": "^5.2.0",
+    "fs": "^0.0.1-security",
+    "path": "^0.12.7"
+  }
+}
